@@ -26,6 +26,7 @@ export const addImage = (files: FileList, user: User, onProgress: (num: number, 
               filePath: filePath,
               uploaderName: user.firstName,
               uploaderId: user.id,
+              uploaderUserName: user.userName,
               createdAt: new Date().getTime()
             }
             const ref = await firebase.firestore().collection('gallery').add(data);
@@ -50,8 +51,8 @@ export const getImages = (): ThunkAction<void, RootState, null, GalleryAction> =
       const docs = await firebase.firestore().collection('gallery').get();
       const arr: GalleryImage[] = [];
       docs.forEach(doc => {
-        const { createdAt, fileName, filePath, imageUrl, uploaderName, uploaderId } = doc.data();
-        arr.push({ createdAt, fileName, filePath, imageUrl, uploaderName, uploaderId, id: doc.id });
+        const { createdAt, fileName, filePath, imageUrl, uploaderName, uploaderId, uploaderUserName } = doc.data();
+        arr.push({ createdAt, fileName, filePath, imageUrl, uploaderName, uploaderId, uploaderUserName, id: doc.id });
       });
       dispatch({
         type: GET_IMAGES,

@@ -5,15 +5,15 @@ import { Route, Redirect, RouteProps } from 'react-router-dom';
 import { RootState } from '../../store';
 
 interface Props extends RouteProps {
-  component: any;
+    component: any;
 }
 
 const PublicRoute: FC<Props> = ({ component: Component, ...rest }) => {
-  const { authenticated } = useSelector((state: RootState) => state.auth);
+    const { authenticated } = useSelector((state: RootState) => state.auth);
 
-  return(
-    <Route {...rest} render={props => !authenticated ? <Component {...props} /> : <Redirect to="/dashboard" />} />
-  );
+    return (
+        <Route {...rest} render={props => !authenticated ? <Component {...props} /> : <Redirect to="/new-entry" />} />
+    );
 }
 
 export default PublicRoute;
