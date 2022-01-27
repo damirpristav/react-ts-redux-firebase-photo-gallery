@@ -1,9 +1,8 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { BrowserRouter, Switch, Route } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import './App.css';
 
-import Header from './components/sections/Header';
 import SignUp from './components/pages/SignUp';
 import SignIn from './components/pages/SignIn';
 import ForgotPassword from './components/pages/ForgotPassword';
@@ -15,46 +14,89 @@ import Loader from './components/UI/Loader';
 import firebase from './firebase/config';
 import { getUserById, setLoading, setNeedVerification } from './store/actions/authActions';
 import { RootState } from './store';
+import AdminLayout from './layout/AdminLayout';
+import UserLayout from './layout/UserLayout';
+import AdminDashboard from './admin-dashboard/pages/Dashboard';
+import NotFound from './components/pages/NotFound'
+import NewEntry from './components/pages/NewEntry';
+
 
 const App: FC = () => {
-  const dispatch = useDispatch();
-  const { loading } = useSelector((state: RootState) => state.auth);
-  
-  // Check if user exists
-  useEffect(() => {
-    dispatch(setLoading(true));
-    const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
-      if(user) {
-        dispatch(setLoading(true));
-        await dispatch(getUserById(user.uid));
-        if(!user.emailVerified) {
-          dispatch(setNeedVerification());
+    const dispatch = useDispatch();
+    const { loading } = useSelector((state: RootState) => state.auth);
+    const { user } = useSelector((state: RootState) => state.auth);
+    const [role, setRole] = useState(false);
+
+    useEffect(() => {
+        if (user?.userRoles) {
+            setRole(user?.userRoles.includes('admin'))
         }
-      }
-      dispatch(setLoading(false));
-    });
+    }, [user])
 
-    return () => {
-      unsubscribe();
-    };
-  }, [dispatch]);
 
-  if(loading) {
-    return <Loader />;
-  }
+    // Check if user exists
+    useEffect(() => {
+        dispatch(setLoading(true));
+        const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                dispatch(setLoading(true));
+                await dispatch(getUserById(user.uid));
+                if (!user.emailVerified) {
+                    dispatch(setNeedVerification());
+                }
+            }
+            dispatch(setLoading(false));
+        });
 
-  return (
-    <BrowserRouter>
-      <Header />
-      <Switch>
-        <Route path="/" component={Homepage} exact />
-        <PublicRoute path="/signup" component={SignUp} exact />
-        <PublicRoute path="/signin" component={SignIn} exact />
-        <PublicRoute path="/forgot-password" component={ForgotPassword} exact />
-        <PrivateRoute path="/dashboard" component={Dashboard} exact />
-      </Switch>
-    </BrowserRouter>
-  );
+        return () => {
+            unsubscribe();
+        };
+    }, [dispatch]);
+
+    if (loading) {
+        return <Loader />;
+    }
+
+
+    let userRoutes;
+    let adminRoutes;
+
+    if (role) {
+        adminRoutes = (
+            <>
+                <Switch>
+                    <Route exact path="/admin/dashboard" component={AdminDashboard} />
+                    <PublicRoute exact path="/signup" component={SignUp} />
+                    <PublicRoute exact path="/signin" component={SignIn} />
+                    <PublicRoute exact path="/forgot-password" component={ForgotPassword} />
+                    <Route path="*" component={NotFound} />
+                    <Redirect to="/admin/dashboard" />
+                </Switch>
+            </>
+        )
+    } else {
+        userRoutes = (
+            <>
+                <Switch>
+                    <Route exact path="/" component={Homepage} />
+                    <PublicRoute exact path="/signup" component={SignUp} />
+                    <PublicRoute exact path="/signin" component={SignIn} />
+                    <PublicRoute exact path="/forgot-password" component={ForgotPassword} />
+                    <PrivateRoute exact path="/new-entry" component={NewEntry} />
+                    <PrivateRoute exact path="/dashboard" component={Dashboard} />
+                    <Route path="*" component={NotFound} /> 
+                </Switch>
+            </>
+        )
+    }
+    return (
+        <>
+            {role ?
+                <AdminLayout >{adminRoutes}</AdminLayout> :
+                <UserLayout >{userRoutes}</UserLayout>
+            }
+        </>
+    );
 }
 
 export default App;
