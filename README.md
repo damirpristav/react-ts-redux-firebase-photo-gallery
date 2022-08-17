@@ -1,7 +1,5 @@
 # react-ts-redux-firebase-photo-gallery
 
-[Blog Post](https://codingfromscratch.dev/photo-gallery-with-react-redux-typescript-firebase)
-
 # Getting started #
 
 Clone or download the files
